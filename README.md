@@ -1,35 +1,114 @@
-# v0-unitas-validation-os-redesign
+# ICP Finder
 
-This is a [Next.js](https://nextjs.org) project bootstrapped with [v0](https://v0.app).
+AI-powered tool that searches across multiple platforms to find people matching your Ideal Customer Profile.
 
-## Built with v0
+## Live
 
-This repository is linked to a [v0](https://v0.app) project. You can continue developing by visiting the link below -- start new chats to make changes, and v0 will push commits directly to this repo. Every merge to `main` will automatically deploy.
+- **Frontend**: https://incubator-icp.vercel.app
+- **Backend API**: https://icp-finder-api-production.up.railway.app
 
-[Continue working on v0 →](https://v0.app/chat/projects/prj_Tgu1ehy1zBmshSAtf7VWppLENKCJ)
+## Tech Stack
 
-## Getting Started
+- **Frontend**: Next.js 16 + React 19 + TypeScript + Tailwind CSS + shadcn/ui
+- **Backend**: FastAPI (Python) + Claude Agent SDK
+- **Deployment**: Vercel (frontend) + Railway (backend)
 
-First, run the development server:
+## How It Works
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
+1. Describe your ideal customer profile in the text box
+2. Select which platforms to search (LinkedIn, X/Twitter, Reddit, Hacker News, Indie Hackers)
+3. Click "Find ICPs" — the backend launches AI agents to search each platform
+4. Results appear in real-time as each platform completes
+5. Export results as CSV
+
+The backend uses Claude agents with web search capabilities to find real people matching your ICP description across 7 platforms. Each platform has a specialized search strategy.
+
+## API Endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/search` | Start an ICP search job |
+| GET | `/jobs/{job_id}` | Poll job status and results |
+| GET | `/health` | Health check |
+
+### POST /search
+
+```json
+{
+  "icp_description": "Solo technical founders building B2B SaaS...",
+  "user_id": "user123",
+  "platforms": ["Reddit", "X/Twitter", "LinkedIn", "Hacker News", "Indie Hackers"]
+}
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Returns `{ "job_id": "uuid" }`. Poll `/jobs/{job_id}` for progress and results.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Local Development
 
-## Learn More
+### Frontend
 
-To learn more, take a look at the following resources:
+```bash
+npm install
+npm run dev
+# http://localhost:3000
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-- [v0 Documentation](https://v0.app/docs) - learn about v0 and how to use it.
+### Backend
 
-<a href="https://v0.app/chat/api/kiro/clone/lauren-lou/v0-unitas-validation-os-redesign" alt="Open in Kiro"><img src="https://pdgvvgmkdvyeydso.public.blob.vercel-storage.com/open%20in%20kiro.svg?sanitize=true" /></a>
+```bash
+cd backend
+cp .env.example .env
+# Fill in ANTHROPIC_API_KEY in .env
+pip install -r requirements.txt
+python3 -m uvicorn server:app --reload --port 8000
+# http://localhost:8000
+```
+
+### Environment Variables
+
+**Frontend** (`.env.local`):
+```
+NEXT_PUBLIC_ICP_API_URL=http://localhost:8000
+```
+
+**Backend** (`backend/.env`):
+```
+ANTHROPIC_API_KEY=sk-ant-...
+ALLOWED_ORIGINS=http://localhost:3000
+```
+
+## Deployment
+
+### Frontend (Vercel)
+
+Connected to GitHub repo, auto-deploys on push to `main`.
+
+Environment variable: `NEXT_PUBLIC_ICP_API_URL` = Railway backend URL.
+
+### Backend (Railway)
+
+- Root directory: `backend`
+- Uses Dockerfile for build
+- Environment variables: `ANTHROPIC_API_KEY`, `ALLOWED_ORIGINS`
+- Supports long-running tasks (ICP search can take several minutes)
+
+## Project Structure
+
+```
+.
+├── app/                    # Next.js pages
+│   ├── dashboard/
+│   │   └── page.tsx        # Main ICP Finder page
+│   └── layout.tsx
+├── components/
+│   └── validation-sidebar.tsx
+├── lib/
+│   ├── icp-api.ts          # API client for backend
+│   └── utils.ts
+├── backend/
+│   ├── server.py           # FastAPI server
+│   ├── find_icps.py        # Agent logic + platform prompts
+│   ├── Dockerfile
+│   └── requirements.txt
+└── vercel.json
+```
