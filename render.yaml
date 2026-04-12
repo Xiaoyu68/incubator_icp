@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: icp-finder-api
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    envVars:
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: ALLOWED_ORIGINS
+        value: https://incubator-icp.vercel.app,http://localhost:3000
