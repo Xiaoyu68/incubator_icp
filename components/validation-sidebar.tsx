@@ -29,19 +29,19 @@ export function ValidationSidebar() {
   return (
     <aside className="flex h-screen w-64 flex-col border-r border-border bg-card">
       <div className="flex flex-col gap-1 p-6">
-        <div className="flex items-center gap-2">
+        <Link href="/" className="flex items-center gap-2 transition-opacity hover:opacity-80">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
             <Zap className="h-4 w-4 text-primary-foreground" />
           </div>
           <div>
             <h1 className="text-lg font-bold tracking-tight text-foreground">
-              Validation Flow
+              Unitas
             </h1>
             <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Incubation Phase
+              ValidationOS
             </p>
           </div>
-        </div>
+        </Link>
       </div>
 
       <nav className="flex flex-1 flex-col gap-1 px-3">
