@@ -1,11 +1,22 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Sparkles, ArrowRight } from "lucide-react"
 
 export default function IdeaForgePage() {
   const [idea, setIdea] = useState("")
+
+  // Load saved idea on mount
+  useEffect(() => {
+    const saved = localStorage.getItem("icp_idea")
+    if (saved) setIdea(saved)
+  }, [])
+
+  // Persist idea on change
+  useEffect(() => {
+    localStorage.setItem("icp_idea", idea)
+  }, [idea])
 
   return (
     <div className="flex min-h-screen flex-col">

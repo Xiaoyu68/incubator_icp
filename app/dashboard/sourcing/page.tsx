@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import Link from "next/link"
+import { useRouter } from "next/navigation"
 import {
   Share2,
   BarChart2,
@@ -11,8 +11,10 @@ import {
   Plus,
   Zap,
   ArrowRight,
+  Loader2,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { startSearch, mapPlatformIds } from "@/lib/icp-api"
 
 const sources = [
   {
@@ -58,7 +60,10 @@ const sources = [
 ]
 
 export default function SourcingPage() {
+  const router = useRouter()
   const [selectedSources, setSelectedSources] = useState<string[]>(["linkedin"])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const toggleSource = (id: string) => {
     setSelectedSources((prev) =>
@@ -66,6 +71,35 @@ export default function SourcingPage() {
         ? prev.filter((s) => s !== id)
         : [...prev, id]
     )
+  }
+
+  const handleStartSearch = async () => {
+    const idea = localStorage.getItem("icp_idea")
+    if (!idea || !idea.trim()) {
+      setError("Please go back to the Idea Forge and describe your vision first.")
+      return
+    }
+    if (selectedSources.length === 0) {
+      setError("Please select at least one platform.")
+      return
+    }
+
+    setLoading(true)
+    setError(null)
+
+    try {
+      const jobId = await startSearch({
+        icp_description: idea.trim(),
+        user_id: "default-user",
+        platforms: mapPlatformIds(selectedSources),
+      })
+      // Store job_id for the results page
+      localStorage.setItem("icp_job_id", jobId)
+      router.push("/dashboard/results")
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to start search")
+      setLoading(false)
+    }
   }
 
   return (
@@ -83,16 +117,24 @@ export default function SourcingPage() {
           </p>
         </div>
 
+        {error && (
+          <div className="mb-6 rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
+            {error}
+          </div>
+        )}
+
         <div className="grid gap-4 md:grid-cols-2">
           {sources.slice(0, 2).map((source) => (
             <button
               key={source.id}
               onClick={() => toggleSource(source.id)}
+              disabled={loading}
               className={cn(
                 "relative flex flex-col items-start rounded-xl border p-6 text-left transition-all",
                 selectedSources.includes(source.id)
                   ? "border-primary bg-card shadow-lg"
-                  : "border-border bg-card hover:border-primary/50"
+                  : "border-border bg-card hover:border-primary/50",
+                loading && "opacity-60 cursor-not-allowed"
               )}
             >
               {selectedSources.includes(source.id) && (
@@ -124,11 +166,13 @@ export default function SourcingPage() {
             <button
               key={source.id}
               onClick={() => toggleSource(source.id)}
+              disabled={loading}
               className={cn(
                 "flex flex-col items-start rounded-xl border p-6 text-left transition-all",
                 selectedSources.includes(source.id)
                   ? "border-primary bg-card shadow-lg"
-                  : "border-border bg-card hover:border-primary/50"
+                  : "border-border bg-card hover:border-primary/50",
+                loading && "opacity-60 cursor-not-allowed"
               )}
             >
               <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-accent">
@@ -151,13 +195,26 @@ export default function SourcingPage() {
             <Plus className="h-4 w-4" />
             Add Source
           </button>
-          <Link
-            href="/dashboard/results"
-            className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+          <button
+            onClick={handleStartSearch}
+            disabled={loading}
+            className={cn(
+              "inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90",
+              loading && "opacity-70 cursor-not-allowed"
+            )}
           >
-            Accept and Start Find
-            <Zap className="h-4 w-4" />
-          </Link>
+            {loading ? (
+              <>
+                Starting Search...
+                <Loader2 className="h-4 w-4 animate-spin" />
+              </>
+            ) : (
+              <>
+                Accept and Start Find
+                <Zap className="h-4 w-4" />
+              </>
+            )}
+          </button>
         </div>
       </div>
     </div>

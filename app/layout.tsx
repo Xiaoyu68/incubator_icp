@@ -7,8 +7,8 @@ const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'Unitas - ValidationOS for Founders',
-  description: 'AI-native incubator that helps founders validate ideas through synthetic ICP analysis',
+  title: 'ICP Finder',
+  description: 'Find your ideal customer profiles across multiple platforms using AI',
   generator: 'v0.app',
   icons: {
     icon: [
