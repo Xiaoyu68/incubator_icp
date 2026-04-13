@@ -173,13 +173,40 @@ async def run_search(job_id: str, icp_description: str, selected_platforms: list
                     "platform_notes": f"Agent failed: {e}",
                 })
 
-        # Merge
-        update_job(job_id, status="running")  # still running during merge
-        merged = await merge_results(
-            icp_description,
-            [r for r in platform_results if r],
-            monitor=None,
-        )
+        # Collect all results from successful platforms
+        successful_results = [r for r in platform_results if r and r.get("results")]
+
+        if not successful_results:
+            update_job(job_id, status="done", results={
+                "icp_description": icp_description,
+                "search_summary": "All platforms failed — no results found.",
+                "results": [],
+                "search_queries_used": [],
+                "recommendations": "",
+            })
+            logger.info("Job %s completed with 0 results (all platforms failed)", job_id)
+            return
+
+        # Merge — fall back to raw concatenation if merge agent fails
+        update_job(job_id, status="running")
+        try:
+            merged = await merge_results(
+                icp_description,
+                successful_results,
+                monitor=None,
+            )
+        except Exception as e:
+            logger.warning("Merge agent failed, falling back to concatenation: %s", e)
+            all_results = []
+            for r in successful_results:
+                all_results.extend(r.get("results", []))
+            merged = {
+                "icp_description": icp_description,
+                "search_summary": "Some platforms succeeded. Merge failed — showing raw results.",
+                "results": all_results,
+                "search_queries_used": [],
+                "recommendations": "",
+            }
 
         update_job(job_id, status="done", results=merged)
         logger.info("Job %s completed with %d results", job_id, len(merged.get("results", [])))

@@ -8,7 +8,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Create non-root user — Claude Agent SDK refuses --dangerously-skip-permissions as root
-RUN useradd --create-home appuser
+RUN useradd --create-home appuser && chown -R appuser:appuser /app
 USER appuser
 
 EXPOSE 8000
